@@ -1,12 +1,13 @@
 // src/app/api/cron/generate-rent/route.ts
 import { NextResponse } from 'next/server';
-import { PrismaClient, ChargeType } from '@prisma/client';
+import { ChargeType } from '@prisma/client';
+import prisma from '@/lib/db'; // Use the singleton to prevent connection issues
 
-const prisma = new PrismaClient();
+// FIX: Prevent Next.js from running this during build
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  // 1. Security Check (Prevent random people from triggering this)
-  // In Vercel Cron, this header is automatically added.
+  // 1. Security Check
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   // 2. Find all ACTIVE Leases
   const activeLeases = await prisma.lease.findMany({
     where: { isActive: true },
-    include: { tenant: true } // just for logging
+    include: { tenant: true }
   });
 
   const now = new Date();
@@ -26,7 +27,6 @@ export async function GET(request: Request) {
 
   // 3. Loop and Create Charges
   for (const lease of activeLeases) {
-    // Check if we ALREADY charged rent this month (Prevent Duplicates)
     const existingCharge = await prisma.charge.findFirst({
       where: {
         leaseId: lease.id,
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
           amount: lease.rentAmount,
           type: ChargeType.RENT,
           description: `Rent - ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`,
-          dueDate: currentMonthStart, // Due on the 1st
+          dueDate: currentMonthStart,
         }
       });
       createdCount++;
