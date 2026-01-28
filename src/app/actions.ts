@@ -11,6 +11,7 @@ import { z } from 'zod';
 const ChargeSchema = z.object({
   leaseId: z.string().uuid(),
   amount: z.number().positive(),
+  // UPDATED: Added DAMAGE_FEE & LATE_FEE
   type: z.enum(['RENT', 'SECURITY_DEPOSIT', 'WATER', 'GARBAGE', 'DAMAGE_FEE', 'LATE_FEE']), 
   description: z.string().optional(),
 });
@@ -46,12 +47,12 @@ const LeaseSchema = z.object({
   securityDeposit: z.number().min(0).optional(),
 });
 
-// --- HELPER: Ensure Landlord Exists ---
+// --- HELPER: Ensure Landlord Exists (The Fix) ---
 async function getAuthenticatedLandlord() {
-  // In a real app with Auth, we would get the ID from the session.
-  // For this single-user app, we just grab the first one or create a default.
+  // Try to find an existing landlord
   let landlord = await prisma.landlord.findFirst();
   
+  // If none exists (empty DB), create one automatically
   if (!landlord) {
     console.log("Database empty. Creating default Admin Landlord...");
     landlord = await prisma.landlord.create({
@@ -96,11 +97,12 @@ export async function refundPayment(paymentId: string, leaseId: string) {
   revalidatePath(`/leases/${leaseId}`);
 }
 
+// UPDATED: Now uses getAuthenticatedLandlord()
 export async function createProperty(name: string, address: string) {
   const result = PropertySchema.safeParse({ name, address });
   if (!result.success) throw new Error("Invalid property data");
   
-  // FIX: Use the helper to ensure a landlord exists
+  // This helper will fix the "No landlord" error
   const landlord = await getAuthenticatedLandlord();
 
   await prisma.property.create({
