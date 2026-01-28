@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Mail, Phone, Calendar, ArrowRight } from "lucide-react";
 
 const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 type PageProps = {
   params: Promise<{ id: string }>;

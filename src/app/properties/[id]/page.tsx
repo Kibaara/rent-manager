@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation"; // <--- ADD THIS IMPORT
 import { AddUnitDialog } from "@/components/unit-actions";
 const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 type PageProps = {
   params: Promise<{ id: string }>;

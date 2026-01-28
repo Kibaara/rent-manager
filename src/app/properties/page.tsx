@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AddPropertyDialog } from "@/components/property-actions"; // You imported it here...
 
 const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 export default async function PropertiesPage() {
   const properties = await prisma.property.findMany({

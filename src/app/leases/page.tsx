@@ -8,7 +8,7 @@ import Link from "next/link";
 import { DraftLeaseDialog } from "@/components/lease-create-dialog"; // Import new component
 
 const prisma = new PrismaClient();
-
+export const dynamic = 'force-dynamic';
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short', day: 'numeric', year: 'numeric'

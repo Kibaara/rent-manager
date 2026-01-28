@@ -12,6 +12,7 @@ import { AddPaymentDialog } from "@/components/lease-payment-dialog";
 import { TerminateLeaseDialog } from "@/components/lease-terminate-dialog";
 
 const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 const formatMoney = (cents: number) => {
   return new Intl.NumberFormat('en-US', {

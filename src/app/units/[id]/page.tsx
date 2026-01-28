@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ArrowLeft, Building } from "lucide-react";
 
 const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 const formatMoney = (cents: number) => {
   return new Intl.NumberFormat('en-US', {

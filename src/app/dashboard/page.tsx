@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, AlertTriangle, Briefcase, TrendingUp } from "lucide-react";
 
 // Helper for currency
+export const dynamic = 'force-dynamic';
 const formatMoney = (cents: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
