@@ -3,18 +3,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { createCharge, recordPaymentAndAllocate } from '@/lib/financial-service';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/db'; // Use the shared DB client
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 // --- VALIDATION SCHEMAS ---
 
 const ChargeSchema = z.object({
   leaseId: z.string().uuid(),
   amount: z.number().positive(),
-  // UPDATED: Added DAMAGE_FEE
-  type: z.enum(['RENT', 'SECURITY_DEPOSIT', 'WATER', 'GARBAGE', 'DAMAGE_FEE']), 
+  type: z.enum(['RENT', 'SECURITY_DEPOSIT', 'WATER', 'GARBAGE', 'DAMAGE_FEE', 'LATE_FEE']), 
   description: z.string().optional(),
 });
 
@@ -48,6 +45,24 @@ const LeaseSchema = z.object({
   rentAmount: z.number().positive(),
   securityDeposit: z.number().min(0).optional(),
 });
+
+// --- HELPER: Ensure Landlord Exists ---
+async function getAuthenticatedLandlord() {
+  // In a real app with Auth, we would get the ID from the session.
+  // For this single-user app, we just grab the first one or create a default.
+  let landlord = await prisma.landlord.findFirst();
+  
+  if (!landlord) {
+    console.log("Database empty. Creating default Admin Landlord...");
+    landlord = await prisma.landlord.create({
+      data: {
+        name: "Admin User",
+        email: "admin@rentmanager.com"
+      }
+    });
+  }
+  return landlord;
+}
 
 // --- ACTIONS ---
 
@@ -84,8 +99,10 @@ export async function refundPayment(paymentId: string, leaseId: string) {
 export async function createProperty(name: string, address: string) {
   const result = PropertySchema.safeParse({ name, address });
   if (!result.success) throw new Error("Invalid property data");
-  const landlord = await prisma.landlord.findFirst();
-  if (!landlord) throw new Error("No landlord account found.");
+  
+  // FIX: Use the helper to ensure a landlord exists
+  const landlord = await getAuthenticatedLandlord();
+
   await prisma.property.create({
     data: { name: result.data.name, address: result.data.address, landlordId: landlord.id }
   });
@@ -173,7 +190,6 @@ export async function createLease(
   revalidatePath('/dashboard');
 }
 
-// NEW: End Lease Action
 export async function endLease(
   leaseId: string, 
   moveOutDate: string, 
