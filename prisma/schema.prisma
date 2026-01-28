@@ -1,0 +1,123 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Landlord {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  properties Property[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Property {
+  id         String    @id @default(uuid())
+  name       String
+  address    String
+  landlordId String
+  landlord   Landlord  @relation(fields: [landlordId], references: [id])
+  units      Unit[]
+  expenses   Expense[]
+  createdAt  DateTime  @default(now())
+}
+
+model Unit {
+  id          String   @id @default(uuid())
+  unitNumber  String
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  monthlyRent Int      @default(0) 
+  leases      Lease[]
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  leases    Lease[]
+  createdAt DateTime @default(now())
+}
+
+model Lease {
+  id         String              @id @default(uuid())
+  startDate  DateTime
+  endDate    DateTime?
+  rentAmount Int
+  isActive   Boolean             @default(true)
+  tenantId   String
+  tenant     Tenant              @relation(fields: [tenantId], references: [id])
+  unitId     String
+  unit       Unit                @relation(fields: [unitId], references: [id])
+  charges    Charge[]
+  payments   Payment[]
+  createdAt  DateTime            @default(now())
+}
+
+model Charge {
+  id          String              @id @default(uuid())
+  type        ChargeType
+  amount      Int
+  dueDate     DateTime
+  isVoided    Boolean             @default(false)
+  description String?
+  leaseId     String
+  lease       Lease               @relation(fields: [leaseId], references: [id])
+  allocations PaymentAllocation[]
+  createdAt   DateTime            @default(now())
+}
+
+model Payment {
+  id           String              @id @default(uuid())
+  amount       Int
+  dateReceived DateTime            @default(now())
+  method       PaymentMethod
+  isRefunded   Boolean             @default(false)
+  leaseId      String
+  lease        Lease               @relation(fields: [leaseId], references: [id])
+  allocations  PaymentAllocation[]
+  createdAt    DateTime            @default(now())
+}
+
+model PaymentAllocation {
+  id        String   @id @default(uuid())
+  amount    Int
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  chargeId  String
+  charge    Charge   @relation(fields: [chargeId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id           String   @id @default(uuid())
+  description  String
+  amount       Int
+  dateIncurred DateTime
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+enum ChargeType {
+  RENT
+  SECURITY_DEPOSIT
+  WATER
+  GARBAGE
+  LATE_FEE    // <-- Added back to prevent DB conflict
+  DAMAGE_FEE 
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_MONEY
+}
