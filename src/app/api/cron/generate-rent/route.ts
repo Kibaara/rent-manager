@@ -1,9 +1,9 @@
 // src/app/api/cron/generate-rent/route.ts
 import { NextResponse } from 'next/server';
 import { ChargeType } from '@prisma/client';
-import prisma from '@/lib/db'; // Use the singleton to prevent connection issues
+import prisma from '@/lib/db'; // Use the shared DB client
 
-// FIX: Prevent Next.js from running this during build
+// FIX: This line prevents the "Failed to collect page data" build error
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
