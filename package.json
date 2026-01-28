@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "test": "vitest"
-  },
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "postinstall": "prisma generate"  
+},
   "dependencies": {
     "@prisma/client": "5.10.0",
     "@radix-ui/react-dialog": "^1.1.15",
